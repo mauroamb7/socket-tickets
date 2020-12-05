@@ -1,8 +1,8 @@
 # Notas:
 
-Este es un pequeño servidor de express listo para ejecutarse y servir la carpeta public en la web.
+Aplicación de gestión de turnos/tickets utilizando sockets.
 
-Recuerden que deben de reconstruir los módulos de node con el comando
+reconstruir los módulos de node con el comando
 
 ```
 npm install
