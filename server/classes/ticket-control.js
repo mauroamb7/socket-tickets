@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Data = require('../data/data.js')
 
 class Ticket {
 
@@ -20,17 +21,41 @@ class TicketControl {
         this.tickets = [];
         this.ultimos4 = [];
 
-        let data = require('../data/data.json')
+        this.conteo = 0;
 
-        if (data.hoy === this.hoy) {
 
-            this.ultimo = data.ultimo;
-            this.tickets = data.tickets;
-            this.ultimos4 = data.ultimos4
 
-        } else {
-            this.reiniciarConteo();
-        }
+        Data.find({}).sort({ _id: -1 }).limit(1)
+            .exec((err, dataDB) => {
+                if (err) {
+                    return res.status(400).json({
+                        ok: false,
+                        err
+                    })
+                }
+
+                Data.estimatedDocumentCount((err, numOfDocs) => {
+                    if (err) throw (err);
+
+                    this.conteo = numOfDocs - 1;
+
+                    console.log(`Total: ${this.conteo}.`);
+
+                });
+
+                console.log('Ultimo db: ' + dataDB[this.conteo].ultimo);
+
+                if (dataDB[this.conteo].hoy === this.hoy) {
+
+                    this.ultimo = dataDB[this.conteo].ultimo;
+                    this.tickets = dataDB[this.conteo].tickets;
+                    this.ultimos4 = dataDB[this.conteo].ultimos4;
+
+                } else {
+                    this.reiniciarConteo();
+                }
+
+            })
 
     }
 
@@ -40,6 +65,7 @@ class TicketControl {
 
         let ticket = new Ticket(this.ultimo, null);
         this.tickets.push(ticket);
+
 
         this.grabarArchivo();
 
@@ -90,25 +116,39 @@ class TicketControl {
         this.ultimo = 0;
         this.tickets = [];
         this.ultimos4 = [];
-        console.log('Se ha inicializado el sistema');
+
+
+        Data.deleteMany({}).then(function() {
+            console.log("Data deleted"); // Success 
+        }).catch(function(error) {
+            console.log(error); // Failure 
+        });
+
         this.grabarArchivo();
+
 
     }
 
     grabarArchivo() {
 
-        let jsonData = {
+
+        let data = new Data({
             ultimo: this.ultimo,
             hoy: this.hoy,
             tickets: this.tickets,
             ultimos4: this.ultimos4
-        }
+        })
 
-        let jsonDataString = JSON.stringify(jsonData);
+        data.save((err) => {
 
-        fs.writeFileSync('./server/data/data.json', jsonDataString);
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    err
+                })
+            }
 
-
+        })
 
     }
 
